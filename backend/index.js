@@ -71,6 +71,36 @@ app.listen(port, () => {
     console.log(`Backend listening on port ${port}`)
 })
 
+// Obtener todos los doctores
+app.get('/doctors', auth, async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM doctors');
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch doctors' });
+    }
+});
+
+// Crear un nuevo doctor
+app.post('/doctors', auth, async (req, res) => {
+    const { name, specialty } = req.body;
+    if (!name || !specialty) {
+        return res.status(400).json({ error: 'Name and specialty are required' });
+    }
+
+    try {
+        const result = await pool.query(
+            'INSERT INTO doctors (name, specialty) VALUES ($1, $2) RETURNING *',
+            [name, specialty]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to create doctor' });
+    }
+});
+
 // Ruta para el endpoint raíz
 app.get('/', (req, res) => {
     res.send('Bienvenido al backend de la aplicación médica');
